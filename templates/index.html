@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serial Communication</title>
+    <style>
+        body {
+            font-size: 16px;
+        }
+
+        h1, label, input, button {
+            font-size: 1em;
+        }
+
+        .send-window, .response-window {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .resizable {
+            resize: horizontal;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Serial Communication</h1>
+    <p>Received data: {{ serial_data }}</p>
+    <form action="/open_serial" method="post">
+        <label for="port">Select Port:</label>
+        <select id="port" name="port" required>
+            {% for port in available_ports %}
+                <option value="{{ port }}">{{ port }}</option>
+            {% endfor %}
+        </select>
+        <label for="baudrate">Baudrate:</label>
+        <input type="text" id="baudrate" name="baudrate" required>
+        <button type="submit">Open Serial</button>
+    </form>
+
+    <form action="/send_data" method="post" id="sendForm">
+        <div id="sendWindows"></div>
+        <button type="button" onclick="addSendWindow()">Add Send Window</button>
+    </form>
+
+    <div class="response-window">
+        <strong>Serial Device Response:</strong>
+        <div id="responseContent"></div>
+    </div>
+
+    <form action="/close_serial">
+        <button type="submit">Close Serial</button>
+    </form>
+
+    <script>
+        var sendWindowCounter = 1;
+
+        function addSendWindow() {
+            var sendWindows = document.getElementById("sendWindows");
+
+            var newWindow = document.createElement("div");
+            newWindow.className = "send-window resizable";
+
+            newWindow.innerHTML =
+                '<label for="label' + sendWindowCounter + '">Label:</label>' +
+                '<input type="text" id="label' + sendWindowCounter + '" name="label' + sendWindowCounter + '">' +
+                '<label for="data_type' + sendWindowCounter + '">Select Data Type:</label>' +
+                '<input type="radio" id="ascii' + sendWindowCounter + '" name="data_type' + sendWindowCounter + '" value="ascii" checked>' +
+                '<label for="ascii' + sendWindowCounter + '">ASCII</label>' +
+                '<input type="radio" id="hex' + sendWindowCounter + '" name="data_type' + sendWindowCounter + '" value="hex">' +
+                '<label for="hex' + sendWindowCounter + '">Hex</label>' +
+                '<input type="text" name="data' + sendWindowCounter + '" required>' +
+                '<button type="button" onclick="removeSendWindow(this)">Remove</button>' +
+                '<button type="button" onclick="sendData(' + sendWindowCounter + ')">Send Data</button>';
+
+            sendWindows.appendChild(newWindow);
+            sendWindowCounter++;
+        }
+
+        function removeSendWindow(button) {
+            var sendWindow = button.parentNode;
+            sendWindow.parentNode.removeChild(sendWindow);
+        }
+
+        function sendData(windowNumber) {
+            var form = document.getElementById("sendForm");
+            form.action = "/send_data/" + windowNumber;
+
+            // Simulate displaying response (replace with actual response handling)
+            var responseContent = document.getElementById("responseContent");
+            responseContent.innerHTML = "<p>Sending data... Waiting for response...</p>";
+
+            // Submit form asynchronously
+            fetch(form.action, {
+                method: form.method,
+                body: new FormData(form),
+            }).then(response => response.text())
+              .then(data => {
+                // Update response window with the received data
+                responseContent.innerHTML = "<p>Serial Device Response:</p><pre>" + data + "</pre>";
+              })
+              .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
